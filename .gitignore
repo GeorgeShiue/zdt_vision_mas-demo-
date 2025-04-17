@@ -1,0 +1,11 @@
+.env
+.webui_secret_key
+
+.cache
+__pycache__
+
+extend_autogen
+test_*
+preprocess_output.txt
+preprocessed_images
+uploaded_images

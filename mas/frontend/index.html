@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Chat Interface with Image Upload</title>
+<style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 2fr 0.3fr;
+      grid-template-areas:
+        "agent-history-message user-history-message"
+        "graph input-message";
+      height: 100vh;
+      gap: 5px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .chat-title {
+      text-align: center; /* 文字置中 */
+      font-weight: bold; /* 文字粗體 */
+    }
+
+    .user-history-message {
+      grid-area: user-history-message;
+      display: flex;
+      flex-direction: column; /* 子元素垂直排列 */
+      border: 2px solid black;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 100%; /* 確保內容過多時可以滾動 */
+    }
+
+    .user-message {
+      display: inline-block;
+      text-align: right;
+      background-color: #d1e7dd;
+      border-radius: 10px;
+      padding: 5px 10px;
+      margin: 5px 0;
+      white-space: pre-wrap; /* 保留文字中的換行 */
+      margin-left: auto; /* !!! 將元素推到父容器的右側 */
+      /* margint-left/right 搭配 display: inline-block */
+    }
+
+    .user-image-message {
+      display: inline-block;
+      text-align: right;
+      background-color: #d1e7dd;
+      border-radius: 10px;
+      padding: 5px 10px;
+      margin: 5px 0;
+      white-space: pre-wrap; /* 保留文字中的換行 */
+      margin-left: auto; /* !!! 將元素推到父容器的右側 */
+      max-width: 50%; /* 限制圖片的最大寬度 */
+    }
+
+    .chatbot-message {
+      display: inline-block;
+      text-align: left;
+      background-color: #deeff4; /* 淺藍色背景 */
+      border-radius: 10px;
+      padding: 5px 10px;
+      margin: 5px 0;
+      white-space: pre-wrap; /* 保留文字中的換行 */
+    }
+
+    .agent-history-message {
+      grid-area: agent-history-message;
+      display: flex;
+      flex-direction: column; /* 子元素垂直排列 */
+      border: 2px solid black;
+      padding: 10px;
+      overflow-y: auto;
+      max-height: 100%; /* 確保內容過多時可以滾動 */
+    }
+
+    .agent-message {
+      display: inline-block;
+      text-align: left; /* 文字靠左對齊 */
+      background-color: #f8d7da; /* 淺紅色背景 */
+      border-radius: 10px; /* 圓角邊框 */
+      padding: 5px 10px; /* 內邊距 */
+      margin: 5px 0; /* 訊息間距 */
+      white-space: pre-wrap; /* 保留文字中的換行 */
+      margin-right: auto; /* 將元素推到父容器的左側 */
+    }
+
+    .agent-tool-message{
+      display: inline-block;
+      text-align: left; /* 文字靠左對齊 */
+      background-color: #f0f0f0; /* 淺灰色背景 */
+      border-radius: 10px; /* 圓角邊框 */
+      padding: 5px 10px; /* 內邊距 */
+      margin: 5px 0; /* 訊息間距 */
+      white-space: pre-wrap; /* 保留文字中的換行 */
+      margin-right: auto; /* 將元素推到父容器的左側 */
+    }
+
+    .agent-image-message{
+      display: inline-block;
+      text-align: left; /* 文字靠左對齊 */
+      background-color: #f8d7da; /* 淺紅色背景 */
+      border-radius: 10px; /* 圓角邊框 */
+      padding: 5px 10px; /* 內邊距 */
+      margin: 5px 0; /* 訊息間距 */
+      white-space: pre-wrap; /* 保留文字中的換行 */
+      max-width: 50%; /* 限制圖片的最大寬度 */
+      margin-right: auto; /* 將元素推到父容器的左側 */
+    }
+
+    .input-message {
+      grid-area: input-message;
+      border: 2px solid black;
+      padding: 10px;
+      display: flex; /* 使用 Flexbox */
+      flex-direction: row; /* 水平排列 */
+      align-items: flex-end; /* 元素底部對齊 */
+      gap: 10px; /* 增加元素之間的間距 */
+    }
+
+    #chat-form {
+      width: 100%; /* 寬度填滿父容器 */
+      height: 100%; /* 高度填滿父容器 */
+      box-sizing: border-box; /* 確保內邊距和邊框不會導致超出父容器 */
+      margin: 0; /* 移除默認外邊距 */
+      padding: 0; /* 移除默認內邊距 */
+    }
+
+    .input-message textarea {
+      width: 90%; /* 設定文字框的寬度 */
+      height: 35px; /* 設定文字框的高度 */
+      position: relative; /* 設定相對位置 */
+      top: 10px; /* 向下移動文字框 */
+      resize: none;
+    }
+
+    .input-message button {
+      height: 40px; /* 設定按鈕的高度 */
+      position: relative; /* 設定相對位置 */
+      top: -4.5px; /* 向上移動按鈕 */
+    }
+
+    .graph {
+      grid-area: graph;
+      border: 2px solid black;
+      padding: 10px;
+      text-align: center;
+      /* height: 100px; 設定固定高度，例如 100px */
+    }
+
+    .graph-title {
+      text-align: center; /* 文字置中 */
+      font-weight: bold; /* 文字粗體 */
+      
+    }
+
+    input[type="file"] {
+      width: 100%;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+<style>
+    body {
+      font-family: sans-serif;
+      /* background-color: #e9f9ea; */
+      /* padding: 20px; */
+    }
+    .agent-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .agent {
+      padding: 10px 10px;
+      margin: 0 5px;
+      border: 2px solid #222;
+      border-radius: 12px;
+      background-color: #ffffff;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    } 
+    .active {
+      background-color: #50e3c2;
+      color: #000;
+    }
+    .arrow {
+      font-size: 24px;
+      color: red;
+      margin: 0 5px;
+    }
+    .controller {
+      text-align: center;
+    }
+    .controller button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+  <!-- User History Message -->
+  <div class="user-history-message" id="user-history-message">
+    <div class="chat-title" id="user-chat-title">使用者聊天紀錄</div>
+  </div>
+
+  <!-- Agent History Message -->
+  <div class="agent-history-message" id="agent-history-message">
+    <div class="chat-title" id="agent-chat-title">代理人聊天紀錄</div>
+  </div>
+
+  <!-- Input Message -->
+  <div class="input-message">
+    <form id="chat-form">
+      <input accept="image/*" id="image-upload" type="file"/>
+      <textarea id="user-input" placeholder="輸入訊息..."></textarea>
+      <button type="submit">送出</button>
+    </form>
+  </div>
+
+  <!-- Graph -->
+  <div class="graph">
+    <!-- <img id="graph-display" src="" alt="System Graph Display"> -->
+    <div class="graph-title" id="graph-title">代理執行進度圖</div>
+    <div class="agent-flow">
+      <!-- <div class="agent" id="User">User</div>
+      <div class="arrow">→</div>
+      <div class="agent" id="Detector">Detector</div>
+      <div class="arrow">→</div>
+      <div class="agent" id="Preprocessor">Preprocessor</div>
+      <div class="arrow">→</div>
+      <div class="agent" id="Descriptor">Descriptor</div> -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // 訊息送出處理
+  const form = document.getElementById('chat-form');
+  const userInput = document.getElementById('user-input');
+  const userHistoryMessage = document.getElementById('user-history-message');
+  const agentHistoryMessage = document.getElementById('agent-history-message');
+  const imageUpload = document.getElementById('image-upload');
+  const graphDisplay = document.getElementById('graph-display');
+  const graphContainer = document.querySelector('.graph');
+  const graphTitle = document.getElementById('graph-title');
+  let agents = [];
+
+  function ChangeName(agent_name) {
+    if (agent_name.includes("Preprocess")){
+      return "Preprocessor";
+    }
+
+    return agent_name;
+  }
+
+  // 定義後端 WebSocket 連接
+  var ws = new WebSocket("ws://localhost:8080");
+
+  // 處理 WebSocket 訊息
+  ws.onmessage = function(event) {
+    // console.log(typeof event.data);
+    console.log(event.data);
+    
+    try {
+      const parsed_data = JSON.parse(event.data);
+
+      // 解析 Agent 訊息
+      if (parsed_data.type == "text") {
+        sender_name = parsed_data.content.sender_name;
+        message = parsed_data.content.content;
+        
+        if (sender_name == "user_proxy" || sender_name == "User") {
+          message = message.replace(/^<img.*?>$/gm, '').trim(); // 移除給VLM看的圖片標籤
+
+          // 將使用者訊息顯示在 user-history-message 區域
+          sender_name = "User";
+          const userHistoryMessageElement = document.createElement("div");
+          userHistoryMessageElement.className = "user-message"; // 使用者訊息
+          userHistoryMessageElement.textContent = `${sender_name}: ${message}`;
+          userHistoryMessage.appendChild(userHistoryMessageElement);
+          userHistoryMessage.scrollTop = userHistoryMessage.scrollHeight;
+
+          // 更新 uploaded-image id
+          const uploaded_image = document.getElementById("uploaded-image");
+          if (uploaded_image) {
+            uploaded_image.id = "uploaded-image-history";
+            console.log("元素的 id 已更改為:", uploaded_image.id);
+
+            // 將複製的圖片添加到 agent-history-message 區域
+            const cloned_image = uploaded_image.cloneNode(true);
+            cloned_image.classList.replace("user-image-message", "agent-image-message");
+            agentHistoryMessage.appendChild(cloned_image);
+            agentHistoryMessage.scrollTop = agentHistoryMessage.scrollHeight;
+
+          } else {
+            console.log("找不到具有指定 id 的元素");
+          }
+        }
+        
+        if (sender_name == "Recipient") {
+          // 將系統回覆顯示在 user-history-message 區域
+          const userHistoryMessageElement = document.createElement("div");
+          userHistoryMessageElement.className = "chatbot-message"; // 機器人訊息
+          userHistoryMessageElement.textContent = `${sender_name}: ${message}`;
+          userHistoryMessage.appendChild(userHistoryMessageElement);
+          userHistoryMessage.scrollTop = userHistoryMessage.scrollHeight;
+        }
+
+        // 顯示代理內部聊天紀錄在 agent-history-message 區域
+        sender_name = ChangeName(sender_name);
+        const agentHistoryMessageElement = document.createElement("div");
+        agentHistoryMessageElement.className = "agent-message";
+        agentHistoryMessageElement.textContent = `${sender_name}: ${message}`;
+        agentHistoryMessage.appendChild(agentHistoryMessageElement);
+        agentHistoryMessage.scrollTop = agentHistoryMessage.scrollHeight;
+      }
+      
+      // 解析 Tool Call 訊息 (Executor)
+      if (parsed_data.type == "execute_function"){
+        content = parsed_data.content;
+        recipient_name = content.recipient_name; 
+        func_name = content.func_name;
+        arguments = content.arguments;
+
+        console.log(`Arguments: ${JSON.stringify(arguments)}`);
+        console.log(`Tool Call: ${recipient_name} - ${func_name}(${arguments})`);
+
+        // 將 Tool Call 訊息顯示在 agent-history-message 區域
+        recipient_name = ChangeName(recipient_name);
+        const agentToolHistoryMessageElement = document.createElement("div");
+        agentToolHistoryMessageElement.className = "agent-tool-message"; // 使用 agent-tool-message 樣式
+        agentToolHistoryMessageElement.textContent = `${recipient_name} 取用 ${func_name} 工具`;
+        if (Object.keys(arguments).length > 0) {
+          agentToolHistoryMessageElement.textContent += `\n參數:\n`;
+          for (const [key, value] of Object.entries(arguments)) {
+            agentToolHistoryMessageElement.textContent += ` ${key}: ${value}\n`;
+          }
+        }
+        agentHistoryMessage.appendChild(agentToolHistoryMessageElement);
+        agentHistoryMessage.scrollTop = agentHistoryMessage.scrollHeight;
+      }
+
+      // 解析 Tool Response 訊息
+      if (parsed_data.type == "tool_response") {
+        sender_name = parsed_data.content.sender_name;
+        // 顯示圖片在 agent-history-message 區域
+        if (sender_name == "Preprocessing Executor") {
+          fetch(`http://localhost:8000/get-image`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('圖片請求失敗');
+            }
+            return response.blob(); // 將圖片數據轉換為 Blob
+          })
+          .then((blob) => {
+            // 創建圖片的本地 URL
+            const imageUrl = URL.createObjectURL(blob);
+
+            // 創建圖片元素並顯示在前端
+            const agentImageHistoryMessageElement = document.createElement("div");
+            agentImageHistoryMessageElement.className = "agent-image-message"; // 使用 agent-image-message 樣式
+
+            const imgElement = document.createElement("img");
+            imgElement.src = imageUrl; // 設置圖片來源
+            imgElement.alt = "從後端獲取的圖片";
+            imgElement.style.maxWidth = "100%"; // 確保圖片不會超出訊息框
+            imgElement.style.borderRadius = "10px"; // 圓角圖片
+
+            // 等待圖片加載完成後自動滾動到底部
+            imgElement.onload = () => {
+              agentHistoryMessage.scrollTop = agentHistoryMessage.scrollHeight;
+            };
+
+            // 將圖片添加到訊息框中
+            agentImageHistoryMessageElement.appendChild(imgElement);
+            agentHistoryMessage.appendChild(agentImageHistoryMessageElement);
+            agentHistoryMessage.scrollTop = agentHistoryMessage.scrollHeight;
+          })
+          .catch((error) => {
+            console.error('圖片請求失敗：', error);
+          });
+        }
+      }
+
+      if (parsed_data.type == "group_chat_run_chat"){
+        speaker_name = parsed_data.content.speaker_name;
+        speaker_name = ChangeName(speaker_name);
+        highlightAgentWithId(speaker_name); // 亮當前 speaker
+      }
+
+    } catch (error) {
+      // console.error("解析 WebSocket 訊息失敗：", error);
+    }
+  };
+  
+  // 處理使用者訊息輸入
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { // 按下 Enter 且未按住 Shift
+      e.preventDefault(); // 防止換行
+      form.dispatchEvent(new Event('submit')); // 模擬按下送出按鈕
+    }
+  });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const message = userInput.value.trim();
+    if (message) {
+      ws.send(message); // 將使用者訊息發送到後端
+      userInput.value = '';
+    }
+  });
+
+  // 處理圖片上傳
+  imageUpload.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // 查找已存在的圖片訊息物件
+      let existingImageElement = document.getElementById("uploaded-image");
+      if (!existingImageElement) {
+        // 如果不存在，則創建新的圖片訊息物件
+        existingImageElement = document.createElement("div");
+        existingImageElement.className = "user-image-message"; // 使用 user-image-message 樣式
+        existingImageElement.id = "uploaded-image"; // 添加唯一 ID
+        userHistoryMessage.appendChild(existingImageElement);
+      }
+
+      // 查找容器內的 <img> 元素
+      let imgElement = existingImageElement.querySelector("img");
+      if (!imgElement) {
+        // 如果容器內沒有 <img>，則創建一個新的 <img> 元素
+        imgElement = document.createElement("img");
+        imgElement.style.maxWidth = "100%"; // 確保圖片不會超出訊息框
+        imgElement.style.borderRadius = "10px"; // 圓角圖片
+        existingImageElement.appendChild(imgElement); // 將 <img> 添加到容器內
+      }
+
+      // 更新 <img> 的屬性
+      imgElement.src = URL.createObjectURL(file); // 使用本地檔案的 URL
+      imgElement.alt = "上傳的圖片";
+
+      // 等待圖片加載完成後自動滾動到底部
+      imgElement.onload = () => {
+        userHistoryMessage.scrollTop = userHistoryMessage.scrollHeight; 
+      };
+
+      // // 自動滾動到底部
+      // userHistoryMessage.scrollTop = userHistoryMessage.scrollHeight;
+
+      // 發送圖片到後端
+      fetch('http://localhost:8000/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data.info); // 在控制台顯示伺服器回應
+      })
+      .catch((error) => {
+        console.error('圖片上傳時發生錯誤：', error);
+      });
+    }
+  });
+  
+  // let current = 0; // 從 User 開始
+
+  // function highlightAgent(index) {
+  //   agents.forEach((id, i) => {
+  //     const el = document.getElementById(id);
+  //     el.classList.toggle('active', i === index);
+  //   });
+  // }
+
+  // function highlightnextAgent() {
+  //   if (current < agents.length - 1) {
+  //     current++;
+  //     highlightAgent(current);
+  //   }
+  // }
+
+  // function reset() {
+  //   current = 0;
+  //   highlightAgent(current); // 只亮 User
+  // }
+
+  function highlightAgentWithId(targetId) {
+    agents.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (id === targetId) {
+          el.classList.add('active'); // 亮目標元素
+        } else {
+          el.classList.remove('active'); // 移除其他元素的亮
+        }
+      }
+    });
+  }
+
+  // 在頁面載入時觸發
+  window.addEventListener("load", () => {
+    // 預設文字輸入框文字 !開發時用
+    userInput.value = "請幫我處理此圖片";
+
+    // 發送請求到後端，清空資料夾
+    fetch("http://localhost:8000/clear-folder", {
+      method: "POST",
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data.info); // 在控制台顯示伺服器回應
+    })
+    .catch((error) => {
+      console.error("Error clearing folder:", error);
+    });
+
+    // 發送請求到後端，獲取 agent 名稱列表顯示在 Graph 區域
+    fetch('http://localhost:8000/get-agents')
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('無法獲取 agent 名稱列表');
+      }
+      return response.json(); // 將回應轉換為 JSON 格式
+    })
+    .then((data) => {
+      agents = data.agents; // 從回應中提取 agents 列表
+      console.log('Agents:', agents);
+
+      // 動態更新前端的 agents
+      const agentFlowContainer = document.querySelector('.agent-flow');
+      agentFlowContainer.innerHTML = ''; // 清空現有內容
+
+      agents.forEach((agent, index) => {
+        // 創建 agent 元素
+        const agentElement = document.createElement('div');
+        agentElement.className = 'agent';
+        agentElement.id = agent;
+        agentElement.textContent = agent;
+
+        // 插入箭頭（除最後一個 agent 外）
+        if (index < agents.length - 1) {
+          const arrowElement = document.createElement('div');
+          arrowElement.className = 'arrow';
+          arrowElement.textContent = '→';
+          agentFlowContainer.appendChild(agentElement);
+          agentFlowContainer.appendChild(arrowElement);
+        } else {
+          agentFlowContainer.appendChild(agentElement);
+        }
+      });
+
+      // 初始畫面亮 User
+      highlightAgentWithId("User");
+    })
+    .catch((error) => {
+      console.error('獲取 agent 名稱列表時發生錯誤：', error);
+    });
+  });
+
+</script>
+</body>
+</html>
