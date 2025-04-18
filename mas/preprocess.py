@@ -368,6 +368,7 @@ detector = StaffImageAgent(
     llm_config = vlm_config,
 )
 # TODO Discriptor容易被前一個Agent的輸出影響
+# TODO 參考ConsultingTeamChatAbility進一步子圖化Preprocessing Agent
 discriptor = StaffImageAgent(
     name = "Discriptor",
     system_message = system_message["Discriptor"],
